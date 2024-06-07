@@ -116,11 +116,11 @@ fn encode_and_decode_to_pop_api_error(value: u32) -> PopApiError {
 fn main() {}
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::*;
 
     #[test]
-    pub(crate) fn test_module_error_encoding_decoding() {
+    fn test_module_error_encoding_decoding() {
         let error = PopApiError::Module(ModuleError { index: 1, error: 2 });
         println!("Error: {error:?}");
         let value_u32 = encode_and_decode_to_u32(error);
@@ -130,7 +130,7 @@ pub mod tests {
     }
 
     #[test]
-    pub(crate) fn test_use_case_error_encoding_decoding() {
+    fn test_use_case_error_encoding_decoding() {
         let error =
             PopApiError::UseCase(UseCaseError::Fungibles(FungiblesError::InsufficientBalance));
         println!("Error: {error:?}");
@@ -141,7 +141,7 @@ pub mod tests {
     }
 
     #[test]
-    pub(crate) fn test_unspecified_error_encoding_decoding() {
+    fn test_unspecified_error_encoding_decoding() {
         let error = PopApiError::Unspecified {
             dispatch_error_index: 3,
             error_index: 2,
@@ -152,5 +152,75 @@ pub mod tests {
         println!("U32: {value_u32}");
         let decoded_error = encode_and_decode_to_pop_api_error(value_u32);
         assert_eq!(error, decoded_error);
+    }
+
+    #[test]
+    fn encoding_possibilities() {
+        // Comprehensive enum with different types of variants
+        #[derive(Debug, PartialEq, Encode, Decode)]
+        enum ComprehensiveEnum {
+            SimpleVariant,
+            DataVariant(u8),
+            NamedFields { w: u8 },
+            NestedEnum(InnerEnum),
+            // Adding more cases to cover all different types
+            OptionVariant(Option<u8>),
+            VecVariant(Vec<u8>),
+            TupleVariant(u8, u8),
+            NestedStructVariant(NestedStruct),
+            NestedEnumStructVariant(NestedEnumStruct),
+        }
+
+        #[derive(Debug, PartialEq, Encode, Decode)]
+        enum InnerEnum {
+            A,
+            B { inner_data: u8 },
+            C(u8),
+        }
+
+        #[derive(Debug, PartialEq, Encode, Decode)]
+        struct NestedStruct {
+            x: u8,
+            y: u8,
+        }
+
+        #[derive(Debug, PartialEq, Encode, Decode)]
+        struct NestedEnumStruct {
+            inner_enum: InnerEnum,
+        }
+
+        // Creating instances of each variant of ComprehensiveEnum
+        let enum_simple = ComprehensiveEnum::SimpleVariant;
+        let enum_data = ComprehensiveEnum::DataVariant(42);
+        let enum_named = ComprehensiveEnum::NamedFields { w: 42 };
+        let enum_nested = ComprehensiveEnum::NestedEnum(InnerEnum::B { inner_data: 42 });
+        let enum_option = ComprehensiveEnum::OptionVariant(Some(42));
+        let enum_vec = ComprehensiveEnum::VecVariant(vec![1, 2, 3, 4, 5]);
+        let enum_tuple = ComprehensiveEnum::TupleVariant(42, 42);
+        let enum_nested_struct =
+            ComprehensiveEnum::NestedStructVariant(NestedStruct { x: 42, y: 42 });
+        let enum_nested_enum_struct =
+            ComprehensiveEnum::NestedEnumStructVariant(NestedEnumStruct {
+                inner_enum: InnerEnum::C(42),
+            });
+
+        // Encode and print each variant individually to see their encoded values
+        println!("{:?} -> {:?}", enum_simple, enum_simple.encode());
+        println!("{:?} -> {:?}", enum_data, enum_data.encode());
+        println!("{:?} -> {:?}", enum_named, enum_named.encode());
+        println!("{:?} -> {:?}", enum_nested, enum_nested.encode());
+        println!("{:?} -> {:?}", enum_option, enum_option.encode());
+        println!("{:?} -> {:?}", enum_vec, enum_vec.encode());
+        println!("{:?} -> {:?}", enum_tuple, enum_tuple.encode());
+        println!(
+            "{:?} -> {:?}",
+            enum_nested_struct,
+            enum_nested_struct.encode()
+        );
+        println!(
+            "{:?} -> {:?}",
+            enum_nested_enum_struct,
+            enum_nested_enum_struct.encode()
+        );
     }
 }
